@@ -39,6 +39,8 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-kren: #5DBB3F;
+  --color-kren-dark: #4A9E32;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -126,5 +128,18 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* Hero image slideshow */
+@keyframes fadeIn {
+  0%, 20% {
+    opacity: 1;
+  }
+  25%, 95% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
   }
 }
