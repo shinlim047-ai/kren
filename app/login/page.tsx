@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/superbase/client'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,9 +21,8 @@ export default function LoginPage() {
     setError(null)
 
     const form = new FormData(e.currentTarget)
-    const phone = (form.get('phone') as string).replace(/\D/g, '')
+    const email = form.get('email') as string
     const password = form.get('password') as string
-    const email = `${phone}@phone.local`
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
@@ -42,7 +41,6 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen grid md:grid-cols-2">
-      {/* Left — form */}
       <div className="flex items-center justify-center p-6 md:p-12">
         <div className="w-full max-w-sm">
           <Link
@@ -56,18 +54,18 @@ export default function LoginPage() {
             Welcome back
           </h1>
           <p className="mt-1 text-sm text-gray-600">
-            Log in to track your livestock.
+            Log in to see your livestock.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone number</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                placeholder="+263 77 123 4567"
-                autoComplete="tel"
+                id="email"
+                name="email"
+                type="email"
+                placeholder="you@example.com"
+                autoComplete="email"
                 required
               />
             </div>
@@ -118,17 +116,16 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right — brand panel */}
       <div className="hidden md:flex bg-kren relative overflow-hidden p-12 flex-col justify-between text-white">
         <p className="text-sm font-medium opacity-80">
-          Kren — Livestock tracking
+          Kren Livestock tracking
         </p>
         <div>
           <h2 className="text-3xl font-bold leading-tight">
-            Your herd, always in sight.
+            Your livestock, always in sight.
           </h2>
           <p className="mt-4 text-white/80 max-w-sm">
-            Real-time GPS tracking, geofence alerts, and notifications.
+            Real-time GPS tracking, geofence alerts, and notifications for easy tracking of your livestock.
           </p>
         </div>
         <p className="text-xs opacity-70">

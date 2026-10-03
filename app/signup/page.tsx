@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/superbase/client'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,13 +22,13 @@ export default function SignupPage() {
 
     const form = new FormData(e.currentTarget)
     const fullName = form.get('fullName') as string
+    const email = form.get('email') as string
     const phoneRaw = form.get('phone') as string
     const phone = phoneRaw.replace(/\D/g, '')
     const password = form.get('password') as string
     const farmName = form.get('farmName') as string
     const location = form.get('location') as string
     const animalCount = parseInt(form.get('animalCount') as string, 10)
-    const email = `${phone}@phone.local`
 
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
@@ -52,6 +52,8 @@ export default function SignupPage() {
         id: data.user.id,
         full_name: fullName,
         farm_name: farmName,
+        email: email,
+        phone: phone,
         location,
         animal_count: animalCount,
       })
@@ -87,8 +89,19 @@ export default function SignupPage() {
                 id="fullName"
                 name="fullName"
                 type="text"
-                placeholder="Tendai Moyo"
                 autoComplete="name"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="you@example.com"
+                autoComplete="email"
                 required
               />
             </div>
@@ -99,7 +112,6 @@ export default function SignupPage() {
                 id="phone"
                 name="phone"
                 type="tel"
-                placeholder="+263 77 123 4567"
                 autoComplete="tel"
                 required
               />
@@ -126,7 +138,6 @@ export default function SignupPage() {
                 id="farmName"
                 name="farmName"
                 type="text"
-                placeholder="Mhofu Ranch"
                 required
               />
             </div>
@@ -137,7 +148,6 @@ export default function SignupPage() {
                 id="location"
                 name="location"
                 type="text"
-                placeholder="Mashonaland West"
                 required
               />
             </div>
@@ -202,7 +212,7 @@ export default function SignupPage() {
       {/* Right — brand panel */}
       <div className="hidden md:flex bg-kren relative overflow-hidden p-12 flex-col justify-between text-white">
         <p className="text-sm font-medium opacity-80">
-          Kren — Livestock tracking
+          Kren  Livestock tracking
         </p>
         <div>
           <h2 className="text-3xl font-bold leading-tight">
