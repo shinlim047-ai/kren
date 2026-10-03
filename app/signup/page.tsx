@@ -24,19 +24,21 @@ export default function SignupPage() {
     const fullName = form.get('fullName') as string
     const email = form.get('email') as string
     const phoneRaw = form.get('phone') as string
-    const phone = phoneRaw.replace(/\D/g, '')
     const password = form.get('password') as string
     const farmName = form.get('farmName') as string
     const location = form.get('location') as string
     const animalCount = parseInt(form.get('animalCount') as string, 10)
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
+    const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
           phone: phoneRaw,
+          farm_name: farmName,
+          location: location,
+          animal_count: animalCount,
         },
       },
     })
@@ -45,18 +47,6 @@ export default function SignupPage() {
       setError(signUpError.message)
       setLoading(false)
       return
-    }
-
-    if (data.user) {
-      await supabase.from('profiles').insert({
-        id: data.user.id,
-        full_name: fullName,
-        farm_name: farmName,
-        email: email,
-        phone: phone,
-        location,
-        animal_count: animalCount,
-      })
     }
 
     router.push('/dashboard')

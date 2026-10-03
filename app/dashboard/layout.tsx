@@ -1,21 +1,27 @@
-//app/dashboard/layout.tsx
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
+import SidebarNav from '@/components/dashboard/SidebarNav'
 
-const nav = [
-  { href: '/dashboard', label: 'Overview' },
-  { href: '/dashboard/animals', label: 'Animals' },
-  { href: '/dashboard/alerts', label: 'Alerts' },
-  { href: '/dashboard/geofences', label: 'Geofences' },
-  { href: '/dashboard/reports', label: 'Reports' },
-  { href: '/dashboard/settings', label: 'Settings' },
-]
-
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) redirect('/login')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name, farm_name, email, phone')
+    .eq('id', user.id)
+    .maybeSingle()
+
   return (
     <div className="min-h-screen flex bg-gray-50">
       <aside className="w-64 bg-white border-r flex flex-col">
@@ -23,28 +29,30 @@ export default function DashboardLayout({
           <Link href="/" className="text-2xl font-bold text-kren">
             Kren
           </Link>
-          <p className="text-xs text-gray-500 mt-1">Mhofu Ranch</p>
+          <p className="text-xs text-gray-500 mt-1">
+            {profile?.farm_name || 'Your farm'}
+          </p>
         </div>
-        <nav className="flex-1 p-4 space-y-1">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="block px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-100 hover:text-kren"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+
+        <SidebarNav />
+
         <div className="p-4 border-t">
-          <p className="text-xs text-gray-500 mb-2 truncate">Tendai Moyo</p>
-          <Link href="/login">
-            <Button variant="outline" size="sm" className="w-full">
+          <p className="text-xs text-gray-500 mb-2 truncate">
+            {profile?.full_name || user.email}
+          </p>
+          <form action="/auth/signout" method="post">
+            <Button
+              type="submit"
+              variant="outline"
+              size="sm"
+              className="w-full"
+            >
               Sign out
             </Button>
-          </Link>
+          </form>
         </div>
       </aside>
+
       <main className="flex-1 overflow-auto">{children}</main>
     </div>
   )
