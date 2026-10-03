@@ -35,7 +35,7 @@ export default async function GeofencesPage() {
           <Card>
             <CardContent className="p-0">
               <div className="h-[500px] rounded-lg overflow-hidden">
-                <LiveMap animals={[]} />
+                <LiveMap animals={[]} geofences={list} />
               </div>
             </CardContent>
           </Card>

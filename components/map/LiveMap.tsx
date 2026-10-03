@@ -18,45 +18,73 @@ type Animal = {
   last_lng: number | null
 }
 
-export default function LiveMap({ animals }: { animals: Animal[] }) {
+type Geofence = {
+  id: string
+  name: string
+  geometry: any
+}
+
+export default function LiveMap({
+  animals,
+  geofences = [],
+}: {
+  animals: Animal[]
+  geofences?: Geofence[]
+}) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
   const markersRef = useRef<mapboxgl.Marker[]>([])
+  const isMounted = useRef(true)
+  const mapLoaded = useRef(false)
 
   const located = animals.filter(
     (a) => a.last_lat !== null && a.last_lng !== null
   )
 
   useEffect(() => {
+    isMounted.current = true
+
     if (!mapContainer.current || map.current) return
 
     const center: [number, number] =
       located.length > 0
         ? [located[0].last_lng as number, located[0].last_lat as number]
-        : [31.0335, -17.8252] // Harare
+        : [31.0335, -17.8252]
 
-    map.current = new mapboxgl.Map({
+    const m = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
       center,
       zoom: 12,
     })
 
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right')
+    m.addControl(new mapboxgl.NavigationControl(), 'top-right')
+    map.current = m
+
+    m.on('load', () => {
+      mapLoaded.current = true
+    })
 
     return () => {
-      map.current?.remove()
+      isMounted.current = false
+      markersRef.current.forEach((marker) => marker.remove())
+      markersRef.current = []
+      m.remove()
       map.current = null
+      mapLoaded.current = false
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    if (!map.current) return
+    if (!map.current || !isMounted.current) return
 
-    markersRef.current.forEach((m) => m.remove())
+    markersRef.current.forEach((marker) => marker.remove())
     markersRef.current = []
 
     located.forEach((a) => {
+      if (!map.current) return
+
       const color =
         a.status === 'alert'
           ? '#dc2626'
@@ -85,11 +113,72 @@ export default function LiveMap({ animals }: { animals: Animal[] }) {
             </div>`
           )
         )
-        .addTo(map.current!)
+        .addTo(map.current)
 
       markersRef.current.push(marker)
     })
   }, [animals])
+
+  useEffect(() => {
+    if (!map.current || !isMounted.current) return
+
+    const m = map.current
+    const sourceId = 'geofences-source'
+    const fillId = 'geofences-fill'
+    const lineId = 'geofences-line'
+
+    function renderGeofences() {
+      if (!m || !isMounted.current) return
+
+      if (m.getLayer(fillId)) m.removeLayer(fillId)
+      if (m.getLayer(lineId)) m.removeLayer(lineId)
+      if (m.getSource(sourceId)) m.removeSource(sourceId)
+
+      const features = geofences
+        .filter((g) => g.geometry)
+        .map((g) => ({
+          type: 'Feature' as const,
+          properties: { id: g.id, name: g.name },
+          geometry: g.geometry.geometry ? g.geometry.geometry : g.geometry,
+        }))
+
+      if (features.length === 0) return
+
+      m.addSource(sourceId, {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features,
+        },
+      })
+
+      m.addLayer({
+        id: fillId,
+        type: 'fill',
+        source: sourceId,
+        paint: {
+          'fill-color': '#5DBB3F',
+          'fill-opacity': 0.15,
+        },
+      })
+
+      m.addLayer({
+        id: lineId,
+        type: 'line',
+        source: sourceId,
+        paint: {
+          'line-color': '#5DBB3F',
+          'line-width': 2,
+        },
+      })
+    }
+
+    if (mapLoaded.current) {
+      renderGeofences()
+    } else {
+      m.once('load', renderGeofences)
+    }
+  }, [geofences])
 
   return <div ref={mapContainer} className="w-full h-full" />
 }
