@@ -5,7 +5,20 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: Request) {
+  const authHeader = request.headers.get('authorization')
+  const expectedSecret = process.env.CRON_SECRET
+
+  if (expectedSecret && authHeader !== `Bearer ${expectedSecret}`) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Unauthorized',
+      },
+      { status: 401 }
+    )
+  }
+
   const traccarUrl = process.env.TRACCAR_URL
   const traccarToken = process.env.TRACCAR_TOKEN
 
